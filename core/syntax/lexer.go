@@ -39,7 +39,25 @@ func (l *EskemaLexer) peek() (byte, error) {
 	return value, err
 }
 
-func (l *EskemaLexer) Lex() *Token {
+func (l *EskemaLexer) Lex() *TokenStream {
+	tokens := make([]*Token, 0)
+
+	for {
+		token := l.next()
+
+		if token == nil {
+			continue
+		}
+
+		tokens = append(tokens, token)
+
+		if token.Type == EndOfFileToken {
+			return newTokenStream(tokens)
+		}
+	}
+}
+
+func (l *EskemaLexer) next() *Token {
 	metadata := &Metadata{
 		Filename: l.fileName,
 		Offset:   l.current,

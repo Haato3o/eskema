@@ -1,8 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/core/syntax"
+	"os"
 )
 
 func main() {
@@ -10,19 +13,13 @@ func main() {
 	examplePath := "./examples/example.skm"
 
 	lexer := syntax.NewLexer(examplePath)
+	tokens := lexer.Lex()
 
-	for {
-		token := lexer.Lex();
+	eskemaParser := parser.New(tokens)
 
-		if token == nil {
-			continue
-		}
+	ast := eskemaParser.Parse()
 
-		fmt.Printf("[%d:%d] %v : %s\n", token.Metadata.Line, token.Metadata.Column, token.Type, token.Value)
-
-		if token.Type == syntax.EndOfFileToken {
-			break
-		}
-	}
-
+	buffer := new(bytes.Buffer)
+	_ = json.NewEncoder(buffer).Encode(ast)
+	os.WriteFile("output.json", buffer.Bytes(), 0644)
 }

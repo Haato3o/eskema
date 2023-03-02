@@ -1,8 +1,8 @@
 package syntax
 
 var keywords = map[string]Keyword{
-	"schema": SchemaDefinition,
-	"enum":   EnumDefinition,
+	"schema": SchemaKeyword,
+	"enum":   EnumKeyword,
 }
 
 var primitives = map[string]Primitive{
