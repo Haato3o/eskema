@@ -1,0 +1,21 @@
+enum MyStateEnum
+{
+    FIRST_VALUE,
+    SECOND_VALUE,
+    THIRD_VALUE
+};
+
+schema MySubSchema
+{
+    state: MyStateEnum,
+    field: Int32,
+    optionalField: String?,
+    customList: Array<Int32>
+};
+
+schema MySchema
+{
+    firstField: Float,
+    createdAt: TimeStamp,
+    subSchema: MySubSchema?
+};
