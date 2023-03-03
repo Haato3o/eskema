@@ -17,8 +17,9 @@ type IdentifierExpression struct {
 }
 
 type SchemaDefinition struct {
-	Id     IdentifierExpression
-	Fields []*FieldExpression
+	Id       IdentifierExpression
+	Fields   []*FieldExpression
+	Generics []*TypeExpression
 }
 
 type FieldExpression struct {
@@ -28,8 +29,8 @@ type FieldExpression struct {
 }
 
 type TypeExpression struct {
-	Id         IdentifierExpression
-	Parameters []*TypeExpression
+	Id       IdentifierExpression
+	Generics []*TypeExpression
 }
 
 type EnumDefinition struct {

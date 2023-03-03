@@ -13,6 +13,16 @@ schema MySubSchema
     customList: Array<Int32>
 };
 
+schema TestWithGenerics<T>
+{
+    value: T
+};
+
+schema TestWithGenerics<TIn, TOut>
+{
+    value: Map<Tin, TOut>
+};
+
 schema MySchema
 {
     firstField: Float,

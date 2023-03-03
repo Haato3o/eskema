@@ -19,8 +19,8 @@ func _() {
 	_ = x[ColonToken-8]
 	_ = x[SemiColonToken-9]
 	_ = x[QuestionMarkToken-10]
-	_ = x[ScopeStart-11]
-	_ = x[ScopeEnd-12]
+	_ = x[ScopeStartToken-11]
+	_ = x[ScopeEndToken-12]
 	_ = x[NewLineToken-13]
 	_ = x[EndOfFileToken-14]
 }

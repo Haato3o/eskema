@@ -16,7 +16,7 @@ func (s *TokenStream) Next() *Token {
 	return s.tokens[current]
 }
 
-func (s *TokenStream) Current() *Token {
+func (s *TokenStream) PeekCurrent() *Token {
 	return s.PeekAt(s.current)
 }
 

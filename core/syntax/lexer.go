@@ -84,7 +84,7 @@ func (l *EskemaLexer) next() *Token {
 
 		if specialToken == NewLineToken {
 			l.line++
-			l.column = 0
+			l.column = 1
 		}
 
 		if specialToken == NewLineToken ||
@@ -152,6 +152,7 @@ func NewLexer(path string) *EskemaLexer {
 		fileName: path,
 		stream:   file,
 		current:  0,
-		line:     0,
+		column:   1,
+		line:     1,
 	}
 }

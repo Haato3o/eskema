@@ -1,5 +1,7 @@
 package syntax
 
+import "fmt"
+
 //go:generate stringer -type=TokenType -output=token-type_string.go
 
 type TokenType int
@@ -19,8 +21,8 @@ const (
 	SemiColonToken
 	QuestionMarkToken
 
-	ScopeStart
-	ScopeEnd
+	ScopeStartToken
+	ScopeEndToken
 
 	NewLineToken
 	EndOfFileToken
@@ -31,6 +33,10 @@ type Metadata struct {
 	Offset   int64
 	Line     int64
 	Column   int64
+}
+
+func (i Metadata) String() string {
+	return fmt.Sprintf("%s [%d:%d]", i.Filename, i.Line, i.Column)
 }
 
 type Token struct {

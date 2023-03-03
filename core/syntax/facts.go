@@ -38,8 +38,8 @@ var tokens = map[byte]TokenType{
 	';': SemiColonToken,
 	'?': QuestionMarkToken,
 
-	'{': ScopeStart,
-	'}': ScopeEnd,
+	'{': ScopeStartToken,
+	'}': ScopeEndToken,
 
 	'\n': NewLineToken,
 }
