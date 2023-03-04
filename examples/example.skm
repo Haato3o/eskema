@@ -1,4 +1,10 @@
-schema Test<TIn, TOut>
+schema MySchemaWithGenerics<T>
 {
-  mapOfStringToListOfGenerics: Map<String, List<TIn>>
+    firstList: List<Map<String, String>>,
+    secondMap: Map<String, Int32>,
+    nowAString: String,
+};
+
+schema Thinkg {
+    Value: String
 };

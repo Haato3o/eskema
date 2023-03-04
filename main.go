@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/core/syntax"
+	"github.com/Haato3o/eskema/core/visualization"
 	"os"
 )
 
@@ -19,7 +20,11 @@ func main() {
 
 	ast := eskemaParser.Parse()
 
-	eskemaParser.VerifySyntaxErrors()
+	if hasErrors := eskemaParser.VerifySyntaxErrors(); hasErrors {
+		return
+	}
+
+	visualization.VisualizeTree(ast)
 
 	buffer := new(bytes.Buffer)
 	_ = json.NewEncoder(buffer).Encode(ast)

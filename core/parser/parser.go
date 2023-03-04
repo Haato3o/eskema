@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Haato3o/eskema/core/syntax"
-	"log"
 )
 
 type EskemaParser struct {
@@ -13,8 +12,7 @@ type EskemaParser struct {
 }
 
 func (p *EskemaParser) notifyError(err error) {
-	log.Fatal(err)
-	//p.errors = append(p.errors, err)
+	p.errors = append(p.errors, err)
 }
 
 func (p *EskemaParser) Parse() *EskemaTree {
@@ -30,6 +28,8 @@ func (p *EskemaParser) Parse() *EskemaTree {
 			ast.Expr = append(ast.Expr, expr)
 		} else if token.Type == syntax.EndOfFileToken {
 			break
+		} else {
+			p.stream.Next()
 		}
 	}
 
@@ -112,7 +112,7 @@ func (p *EskemaParser) parseSchema() *EskemaExpression {
 
 	return &EskemaExpression{
 		Type: SchemaExpr,
-		Data: &schemaDefinition,
+		Data: schemaDefinition,
 	}
 }
 
@@ -190,7 +190,7 @@ func (p *EskemaParser) parseField() *FieldExpression {
 }
 
 func (p *EskemaParser) parseEnum() *EskemaExpression {
-	enumDefinition := EnumDefinition{
+	enumDefinition := &EnumDefinition{
 		Values: make([]string, 0),
 	}
 	name := p.nextTokenMustBe(syntax.LiteralToken)
@@ -214,7 +214,7 @@ func (p *EskemaParser) parseEnum() *EskemaExpression {
 
 	return &EskemaExpression{
 		Type: EnumExpr,
-		Data: &enumDefinition,
+		Data: enumDefinition,
 	}
 }
 
