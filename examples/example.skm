@@ -1,31 +1,4 @@
-enum MyStateEnum
+schema Test<TIn, TOut>
 {
-    FIRST_VALUE,
-    SECOND_VALUE,
-    THIRD_VALUE
-};
-
-schema MySubSchema
-{
-    state: MyStateEnum,
-    field: Int32,
-    optionalField: String?,
-    customList: Array<Int32>
-};
-
-schema TestWithGenerics<T>
-{
-    value: T
-};
-
-schema TestWithGenerics<TIn, TOut>
-{
-    value: Map<Tin, TOut>
-};
-
-schema MySchema
-{
-    firstField: Float,
-    createdAt: TimeStamp,
-    subSchema: MySubSchema?
+  mapOfStringToListOfGenerics: Map<String, List<TIn>>
 };

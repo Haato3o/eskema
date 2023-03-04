@@ -14,7 +14,6 @@ type EskemaParser struct {
 
 func (p *EskemaParser) notifyError(err error) {
 	log.Fatal(err)
-
 	//p.errors = append(p.errors, err)
 }
 
@@ -35,6 +34,15 @@ func (p *EskemaParser) Parse() *EskemaTree {
 	}
 
 	return ast
+}
+
+func (p *EskemaParser) VerifySyntaxErrors() bool {
+
+	for _, err := range p.errors {
+		fmt.Printf("%s\n", err)
+	}
+
+	return len(p.errors) > 0
 }
 
 func (p *EskemaParser) parseKeyword() *EskemaExpression {
@@ -67,8 +75,7 @@ func (p *EskemaParser) parseSchema() *EskemaExpression {
 		for {
 			nextToken := p.stream.PeekCurrent()
 
-			if nextToken.Type != syntax.LiteralToken &&
-				nextToken.Type != syntax.PrimitiveTypeToken {
+			if nextToken.Type != syntax.LiteralToken {
 				break
 			}
 
@@ -120,12 +127,7 @@ func (p *EskemaParser) parseType() *TypeExpression {
 
 	currentToken := p.stream.PeekCurrent()
 
-	switch currentToken.Type {
-	case syntax.CommaToken,
-		syntax.GreaterThanToken:
-		p.stream.Next()
-		break
-	case syntax.LesserThanToken:
+	if currentToken.Type == syntax.LesserThanToken {
 		p.stream.Next()
 
 		for {
@@ -145,6 +147,14 @@ func (p *EskemaParser) parseType() *TypeExpression {
 			typeExpression.Generics = append(typeExpression.Generics, genericExpr)
 
 		}
+
+		currentToken = p.stream.PeekCurrent()
+	}
+
+	switch currentToken.Type {
+	case syntax.CommaToken,
+		syntax.GreaterThanToken:
+		p.stream.Next()
 		break
 	}
 
@@ -227,29 +237,35 @@ func (p *EskemaParser) parseEnumValue() *syntax.Token {
 func (p *EskemaParser) nextTokenMustBe(expectedTypes ...syntax.TokenType) *syntax.Token {
 	token := p.stream.Next()
 
-	for _, expectedType := range expectedTypes {
-		if token.Type == expectedType {
-			return token
-		}
-	}
-
-	p.notifyError(errors.New(fmt.Sprintf(ErrUnexpectedToken, token.Metadata, expectedTypes, token.Type)))
-
-	return nil
+	return p.verifyTokenMatch(token, expectedTypes...)
 }
 
 func (p *EskemaParser) currentMustBe(expectedTypes ...syntax.TokenType) *syntax.Token {
 	token := p.stream.PeekCurrent()
 
+	return p.verifyTokenMatch(token, expectedTypes...)
+}
+
+func (p *EskemaParser) verifyTokenMatch(currentToken *syntax.Token, expectedTypes ...syntax.TokenType) *syntax.Token {
+
 	for _, expectedType := range expectedTypes {
-		if token.Type == expectedType {
-			return token
+		if currentToken.Type == expectedType {
+			return currentToken
 		}
 	}
 
-	p.notifyError(errors.New(fmt.Sprintf(ErrUnexpectedToken, token.Metadata, expectedTypes, token.Type)))
+	p.notifyError(
+		errors.New(
+			fmt.Sprintf(
+				ErrUnexpectedToken,
+				currentToken.Metadata,
+				syntax.ToTokenTypeNiceName(expectedTypes...),
+				currentToken.Value,
+			),
+		),
+	)
 
-	return nil
+	return currentToken
 }
 
 func New(stream *syntax.TokenStream) *EskemaParser {

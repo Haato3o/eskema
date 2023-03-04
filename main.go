@@ -19,6 +19,8 @@ func main() {
 
 	ast := eskemaParser.Parse()
 
+	eskemaParser.VerifySyntaxErrors()
+
 	buffer := new(bytes.Buffer)
 	_ = json.NewEncoder(buffer).Encode(ast)
 	os.WriteFile("output.json", buffer.Bytes(), 0644)
