@@ -24,9 +24,9 @@ func main() {
 
 	visualization.VisualizeTree(ast)
 
-	kotlinEmitter := languages.NewKotlinEmitter()
+	emitter := languages.NewCSharpEmitter()
 
-	ktCode := kotlinEmitter.Emit(ast)
+	ktCode := emitter.Emit(ast)
 
 	println(ktCode)
 }

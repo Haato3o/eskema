@@ -6,57 +6,56 @@ import (
 	"strings"
 )
 
-const Indent = "    "
-
-var ktPrimitives = map[string]string{
-	"String":    "String",
-	"Char":      "Char",
-	"UInt8":     "UByte",
-	"UInt16":    "UShort",
-	"UInt32":    "UInt",
-	"UInt64":    "ULong",
-	"Int8":      "Byte",
-	"Int16":     "Short",
-	"Int32":     "Int",
-	"Int64":     "Long",
-	"Float":     "Float",
-	"Double":    "Double",
-	"TimeStamp": "Instant",
-	"Date":      "LocalDate",
-	"DateTime":  "LocalDateTime",
+var cSharpPrimitives = map[string]string{
+	"String":    "string",
+	"Char":      "char",
+	"UInt8":     "ubyte",
+	"UInt16":    "ushort",
+	"UInt32":    "uint",
+	"UInt64":    "ulong",
+	"Int8":      "byte",
+	"Int16":     "short",
+	"Int32":     "int",
+	"Int64":     "long",
+	"Float":     "float",
+	"Double":    "double",
+	"TimeStamp": "TimeSpan",
+	"Date":      "DateTime",
+	"DateTime":  "DateTime",
 	"Array":     "List",
-	"Map":       "Map",
-	"Bool":      "Boolean",
+	"Map":       "Dictionary",
+	"Bool":      "bool",
 }
 
-type KotlinEmitter struct{}
+type CSharpEmitter struct {
+}
 
-func (k *KotlinEmitter) Emit(tree *parser.EskemaTree) string {
+func (c *CSharpEmitter) Emit(tree *parser.EskemaTree) string {
 	var builder strings.Builder
 
 	for _, expr := range tree.Expr {
-		builder.WriteString(k.emitExpression(expr))
+		builder.WriteString(c.emitExpression(expr))
 		builder.WriteString("\n")
 	}
 
 	return builder.String()
 }
 
-func (k *KotlinEmitter) emitExpression(expr *parser.EskemaExpression) string {
+func (c *CSharpEmitter) emitExpression(expr *parser.EskemaExpression) string {
 	switch expr.Type {
 	case parser.SchemaExpr:
-		return k.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		return c.emitSchema(expr.Data.(*parser.SchemaDefinition))
 	case parser.EnumExpr:
-		return k.emitEnum(expr.Data.(*parser.EnumDefinition))
+		return c.emitEnum(expr.Data.(*parser.EnumDefinition))
 	default:
 		return ""
 	}
 }
 
-func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) string {
+func (c *CSharpEmitter) emitSchema(schema *parser.SchemaDefinition) string {
 	var builder strings.Builder
 
-	builder.WriteString("data class ")
+	builder.WriteString("public record ")
 	builder.WriteString(schema.Id.Name)
 
 	if len(schema.Generics) > 0 {
@@ -65,7 +64,7 @@ func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) string {
 		for i, generic := range schema.Generics {
 			isLast := i+1 == len(schema.Generics)
 
-			builder.WriteString(k.emitType(generic))
+			builder.WriteString(c.emitType(generic))
 
 			if !isLast {
 				builder.WriteString(", ")
@@ -83,7 +82,7 @@ func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) string {
 
 		builder.WriteString(Indent)
 
-		builder.WriteString(k.emitField(field))
+		builder.WriteString(c.emitField(field))
 
 		if !isLast {
 			builder.WriteString(",")
@@ -92,30 +91,30 @@ func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) string {
 		builder.WriteString("\n")
 	}
 
-	builder.WriteString(")\n")
+	builder.WriteString(");\n")
 
 	return builder.String()
 }
 
-func (k *KotlinEmitter) emitField(field *parser.FieldExpression) string {
+func (c *CSharpEmitter) emitField(field *parser.FieldExpression) string {
 	var builder strings.Builder
 
-	builder.WriteString("val ")
-	builder.WriteString(field.Id.Name)
-	builder.WriteString(": ")
-	builder.WriteString(k.emitType(field.Type))
+	builder.WriteString(c.emitType(field.Type))
 
 	if field.IsOptional {
 		builder.WriteString("?")
 	}
 
+	builder.WriteString(" ")
+	builder.WriteString(field.Id.Name)
+
 	return builder.String()
 }
 
-func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) string {
+func (c *CSharpEmitter) emitType(typeExpr *parser.TypeExpression) string {
 	var builder strings.Builder
 
-	primitive, isPrimitive := ktPrimitives[typeExpr.Id.Name]
+	primitive, isPrimitive := cSharpPrimitives[typeExpr.Id.Name]
 
 	if isPrimitive {
 		builder.WriteString(primitive)
@@ -131,7 +130,7 @@ func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) string {
 			builder.WriteString("<")
 
 		}
-		builder.WriteString(k.emitType(typ))
+		builder.WriteString(c.emitType(typ))
 
 		if isLast {
 			builder.WriteString(">")
@@ -143,17 +142,17 @@ func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) string {
 	return builder.String()
 }
 
-func (k *KotlinEmitter) emitEnum(enum *parser.EnumDefinition) string {
+func (c *CSharpEmitter) emitEnum(enum *parser.EnumDefinition) string {
 	var builder strings.Builder
 
-	builder.WriteString("enum class ")
+	builder.WriteString("enum ")
 	builder.WriteString(enum.Id.Name)
 	builder.WriteString(" {\n")
 
 	for i, value := range enum.Values {
 
 		builder.WriteString(Indent)
-		builder.WriteString(k.emitLiteralValue(value))
+		builder.WriteString(c.emitLiteralValue(value))
 
 		isLast := i+1 == len(enum.Values)
 
@@ -164,15 +163,15 @@ func (k *KotlinEmitter) emitEnum(enum *parser.EnumDefinition) string {
 		builder.WriteString("\n")
 	}
 
-	builder.WriteString("}\n")
+	builder.WriteString("};\n")
 
 	return builder.String()
 }
 
-func (*KotlinEmitter) emitLiteralValue(enum string) string {
+func (c *CSharpEmitter) emitLiteralValue(enum string) string {
 	return enum
 }
 
-func NewKotlinEmitter() emitter.LanguageCodeEmitter {
-	return &KotlinEmitter{}
+func NewCSharpEmitter() emitter.LanguageCodeEmitter {
+	return &CSharpEmitter{}
 }
