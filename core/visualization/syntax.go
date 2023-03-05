@@ -48,7 +48,7 @@ func buildSchema(schema *parser.SchemaDefinition, order TreeOrder) string {
 	baseString := fmt.Sprintf("%s schema: %s\n", getParentConnector(order), schema.Id.Name)
 
 	for i, generic := range schema.Generics {
-		baseString += buildType(generic, level, getOrder(i, len(schema.Generics)))
+		baseString += buildType(generic, level, getOrder(i, len(schema.Generics)+len(schema.Fields)))
 	}
 
 	for i, field := range schema.Fields {

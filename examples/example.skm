@@ -1,10 +1,25 @@
-schema MySchemaWithGenerics<T>
+enum State
 {
-    firstList: List<Map<String, String>>,
-    secondMap: Map<String, Int32>,
-    nowAString: String,
+    TEST_1,
+    TEST_2,
+    TEST_3
 };
 
-schema Thinkg {
-    Value: String
+schema SimpleSchema
+{
+    value1: String,
+    value2: Map<String, Int32>,
+    value3: Bool
+};
+
+schema SimpleSchemaWithGenerics<T>
+{
+    value1: T,
+    value2: List<T>
+};
+
+schema ComplexSchema<TIn, TOut>
+{
+    value1: Map<TIn, SimpleSchemaWithGenerics<TOut>>?,
+    value2: List<List<String>>?
 };

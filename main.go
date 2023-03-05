@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/core/syntax"
 	"github.com/Haato3o/eskema/core/visualization"
-	"os"
+	"github.com/Haato3o/eskema/emitter/languages"
 )
 
 func main() {
@@ -26,7 +24,9 @@ func main() {
 
 	visualization.VisualizeTree(ast)
 
-	buffer := new(bytes.Buffer)
-	_ = json.NewEncoder(buffer).Encode(ast)
-	os.WriteFile("output.json", buffer.Bytes(), 0644)
+	kotlinEmitter := languages.NewKotlinEmitter()
+
+	ktCode := kotlinEmitter.Emit(ast)
+
+	println(ktCode)
 }

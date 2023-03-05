@@ -19,5 +19,6 @@ Eskema supports many primitive types as well as some more specific types. The su
 - `DateTime`
 - `Array<TValue>`
 - `Map<TKey, TValue>`
+- `Bool`
 
 Nullables are also supported.

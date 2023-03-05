@@ -20,4 +20,5 @@ const (
 	DateTime
 	Array
 	Map
+	Bool
 )

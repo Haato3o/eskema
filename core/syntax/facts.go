@@ -23,6 +23,7 @@ var primitives = map[string]Primitive{
 	"DateTime":  DateTime,
 	"Array":     Array,
 	"Map":       Map,
+	"Bool":      Bool,
 }
 
 var tokens = map[byte]TokenType{
