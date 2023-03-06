@@ -15,11 +15,11 @@ schema SimpleSchema
 schema SimpleSchemaWithGenerics<T>
 {
     value1: T,
-    value2: List<T>
+    value2: Array<T>
 };
 
 schema ComplexSchema<TIn, TOut>
 {
     value1: Map<TIn, SimpleSchemaWithGenerics<TOut>>?,
-    value2: List<List<String>>?
+    value2: Array<Array<String>>?
 };
