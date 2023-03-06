@@ -27,8 +27,7 @@ var cSharpPrimitives = map[string]string{
 	"Bool":      "bool",
 }
 
-type CSharpEmitter struct {
-}
+type CSharpEmitter struct{}
 
 func (c *CSharpEmitter) Emit(tree *parser.EskemaTree) string {
 	var builder strings.Builder

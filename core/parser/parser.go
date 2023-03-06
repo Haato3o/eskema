@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Haato3o/eskema/core/syntax"
+	"log"
 )
 
 type EskemaParser struct {
@@ -39,7 +40,7 @@ func (p *EskemaParser) Parse() *EskemaTree {
 func (p *EskemaParser) VerifySyntaxErrors() bool {
 
 	for _, err := range p.errors {
-		fmt.Printf("%s\n", err)
+		log.Println(err)
 	}
 
 	return len(p.errors) > 0

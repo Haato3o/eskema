@@ -1,32 +1,46 @@
 package main
 
 import (
+	"github.com/Haato3o/eskema/cli"
 	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/core/syntax"
 	"github.com/Haato3o/eskema/core/visualization"
-	"github.com/Haato3o/eskema/emitter/languages"
+	"log"
 )
 
 func main() {
 
-	examplePath := "./examples/example.skm"
+	args := cli.ParseArguments()
 
-	lexer := syntax.NewLexer(examplePath)
+	if args.ShouldPrintSupportedLanguages {
+		cli.PrintSupportedLanguages()
+		return
+	}
+
+	if err := args.VerifyRequired(); err != nil {
+		log.Fatalln(err)
+	}
+
+	lexer := syntax.NewLexerFromFile(args.FileName)
 	tokens := lexer.Lex()
-
 	eskemaParser := parser.New(tokens)
-
 	ast := eskemaParser.Parse()
 
 	if hasErrors := eskemaParser.VerifySyntaxErrors(); hasErrors {
 		return
 	}
 
-	visualization.VisualizeTree(ast)
+	if args.ShouldPrintAST {
+		visualization.VisualizeTree(ast)
+	}
 
-	emitter := languages.NewCSharpEmitter()
+	emitter, err := cli.GetLanguageEmitter(args.Language)
 
-	ktCode := emitter.Emit(ast)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	println(ktCode)
+	code := emitter.Emit(ast)
+
+	println(code)
 }

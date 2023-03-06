@@ -1,13 +1,14 @@
 package syntax
 
 import (
+	"bytes"
 	"io"
 	"os"
 )
 
 type EskemaLexer struct {
 	fileName string
-	stream   io.ReadSeekCloser
+	stream   io.ReadSeeker
 	current  int64
 	column   int64
 	line     int64
@@ -145,12 +146,18 @@ func (l *EskemaLexer) next() *Token {
 	}
 }
 
-func NewLexer(path string) *EskemaLexer {
-	file, _ := os.OpenFile(path, os.O_RDONLY, os.ModeType)
+func NewLexerFromFile(fileName string) *EskemaLexer {
+	rawData, _ := os.ReadFile(fileName)
+
+	return NewLexer(rawData, fileName)
+}
+
+func NewLexer(input []byte, fileName string) *EskemaLexer {
+	buffer := bytes.NewReader(input)
 
 	return &EskemaLexer{
-		fileName: path,
-		stream:   file,
+		fileName: fileName,
+		stream:   buffer,
 		current:  0,
 		column:   1,
 		line:     1,
