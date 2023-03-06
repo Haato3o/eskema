@@ -10,6 +10,7 @@ var (
 type EskemaArguments struct {
 	FileName                      string
 	Language                      string
+	Output                        string
 	ShouldPrintAST                bool
 	ShouldPrintSupportedLanguages bool
 }

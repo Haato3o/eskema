@@ -42,6 +42,8 @@ type ComplexSchema[TIn string, TOut any] struct {
 func (c *GoLangEmitter) Emit(tree *parser.EskemaTree) string {
 	var builder strings.Builder
 
+	builder.WriteString("package example\n\n")
+
 	for _, expr := range tree.Expr {
 		builder.WriteString(c.emitExpression(expr))
 		builder.WriteString("\n")

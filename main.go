@@ -6,6 +6,7 @@ import (
 	"github.com/Haato3o/eskema/core/syntax"
 	"github.com/Haato3o/eskema/core/visualization"
 	"log"
+	"os"
 )
 
 func main() {
@@ -42,5 +43,14 @@ func main() {
 
 	code := emitter.Emit(ast)
 
-	println(code)
+	if args.Output != "" {
+		file, _ := os.OpenFile(args.Output, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+
+		_, _ = file.WriteString(code)
+
+		_ = file.Close()
+	} else {
+		println(code)
+	}
+
 }

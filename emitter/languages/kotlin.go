@@ -34,6 +34,8 @@ type KotlinEmitter struct{}
 func (k *KotlinEmitter) Emit(tree *parser.EskemaTree) string {
 	var builder strings.Builder
 
+	builder.WriteString("package com.example\n\n")
+
 	for _, expr := range tree.Expr {
 		builder.WriteString(k.emitExpression(expr))
 		builder.WriteString("\n")

@@ -32,6 +32,8 @@ type CSharpEmitter struct{}
 func (c *CSharpEmitter) Emit(tree *parser.EskemaTree) string {
 	var builder strings.Builder
 
+	builder.WriteString("namespace Example;\n\n")
+
 	for _, expr := range tree.Expr {
 		builder.WriteString(c.emitExpression(expr))
 		builder.WriteString("\n")
