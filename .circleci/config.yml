@@ -1,0 +1,22 @@
+version: 2.1
+orbs:
+  codecov: codecov/codecov@3
+
+jobs:
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: cimg/go:1.19.6
+    steps:
+      - checkout
+      - run:
+          name: Run tests and collect coverage
+          command: go test -race -coverprofile=coverage.txt -covermode=atomic
+      - codecov/upload
+
+
+workflows:
+  version: 2.1
+  build-test:
+      jobs:
+        - build  
