@@ -22,6 +22,16 @@ type SchemaDefinition struct {
 	Generics []*TypeExpression
 }
 
+func (s *SchemaDefinition) ContainsNullableFields() bool {
+	for _, field := range s.Fields {
+		if field.IsOptional {
+			return true
+		}
+	}
+
+	return false
+}
+
 type FieldExpression struct {
 	Id         IdentifierExpression
 	IsOptional bool

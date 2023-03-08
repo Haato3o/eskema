@@ -17,6 +17,7 @@ var supportedLanguages = map[string]emitter.LanguageCodeEmitter{
 	"kotlin": languages.NewKotlinEmitter(),
 	"csharp": languages.NewCSharpEmitter(),
 	"golang": languages.NewGoLangEmitter(),
+	"swift":  languages.NewSwiftEmitter(),
 }
 
 func GetLanguageEmitter(language string) (emitter.LanguageCodeEmitter, error) {
