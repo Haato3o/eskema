@@ -181,9 +181,15 @@ func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		builder.WriteString(s.emitType(typ))
 
 		if isLast {
-			builder.WriteString(">")
+			if !isMap && !isArray {
+				builder.WriteString(">")
+			}
 		} else {
-			builder.WriteString(", ")
+			if isMap {
+				builder.WriteString(" : ")
+			} else {
+				builder.WriteString(", ")
+			}
 		}
 	}
 
