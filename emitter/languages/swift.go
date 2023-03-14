@@ -1,6 +1,7 @@
 package languages
 
 import (
+	"github.com/Haato3o/eskema/core/codestyle"
 	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/emitter"
 	"strings"
@@ -22,7 +23,6 @@ var swiftPrimitives = map[string]string{
 	"TimeStamp": "Instant",
 	"Date":      "LocalDate",
 	"DateTime":  "LocalDateTime",
-	"Array":     "List",
 	"Map":       "Map",
 	"Bool":      "Boolean",
 }
@@ -34,7 +34,7 @@ func (s *SwiftEmitter) Emit(tree *parser.EskemaTree) string {
 
 	for _, expr := range tree.Expr {
 		builder.WriteString(s.emitExpression(expr))
-		builder.WriteString("\n")
+		builder.WriteString("\n\n")
 	}
 
 	return builder.String()
@@ -54,51 +54,62 @@ func (s *SwiftEmitter) emitExpression(expr *parser.EskemaExpression) string {
 func (s *SwiftEmitter) emitSchema(schema *parser.SchemaDefinition) string {
 	var builder strings.Builder
 
-	builder.WriteString("data class ")
+	builder.WriteString("public struct ")
 	builder.WriteString(schema.Id.Name)
+	builder.WriteString(": Decodable, Equatable {\n")
 
-	if len(schema.Generics) > 0 {
-		builder.WriteString("<")
+	// TODO: Emit generics
 
-		for i, generic := range schema.Generics {
-			isLast := i+1 == len(schema.Generics)
-
-			builder.WriteString(s.emitType(generic))
-
-			if !isLast {
-				builder.WriteString(", ")
-			}
-		}
-
-		builder.WriteString(">")
-	}
-
-	builder.WriteString("(\n")
-
-	for i, field := range schema.Fields {
-
-		isLast := i+1 == len(schema.Fields)
-
+	for _, field := range schema.Fields {
 		builder.WriteString(Indent)
 
-		builder.WriteString(s.emitField(field))
-
-		if !isLast {
-			builder.WriteString(",")
-		}
+		builder.WriteString(s.emitFieldDeclaration(field))
 
 		builder.WriteString("\n")
 	}
 
-	builder.WriteString(")")
+	if schema.ContainsNullableFields() {
+		s.emitNullableConstructor(&builder, schema)
+	}
+
+	builder.WriteString("}")
 
 	return builder.String()
+}
+
+func (s *SwiftEmitter) emitNullableConstructor(builder *strings.Builder, schema *parser.SchemaDefinition) {
+
+	builder.WriteString("\n")
+
+	builder.WriteString(Indent)
+	builder.WriteString("public init(")
+
+	for i, field := range schema.Fields {
+		isLast := i+1 == len(schema.Fields)
+
+		builder.WriteString(s.emitConstructorField(field))
+
+		if !isLast {
+			builder.WriteString(", ")
+		}
+	}
+
+	builder.WriteString(") {\n")
+
+	for _, field := range schema.Fields {
+		builder.WriteString(Indent)
+		builder.WriteString(Indent)
+		builder.WriteString(s.emitFieldInitializer(field))
+		builder.WriteString("\n")
+	}
+
+	builder.WriteString(Indent)
+	builder.WriteString("}\n")
 }
 
 func (s *SwiftEmitter) emitField(field *parser.FieldExpression) string {
 	var builder strings.Builder
 
-	builder.WriteString("val ")
 	builder.WriteString(field.Id.Name)
 	builder.WriteString(": ")
 	builder.WriteString(s.emitType(field.Type))
@@ -110,13 +121,51 @@ func (s *SwiftEmitter) emitField(field *parser.FieldExpression) string {
 	return builder.String()
 }
 
+func (s *SwiftEmitter) emitFieldDeclaration(field *parser.FieldExpression) string {
+	var builder strings.Builder
+
+	builder.WriteString("let ")
+	builder.WriteString(s.emitField(field))
+
+	return builder.String()
+}
+
+func (s *SwiftEmitter) emitConstructorField(field *parser.FieldExpression) string {
+	emittedField := s.emitField(field)
+
+	if field.IsOptional {
+		emittedField = emittedField + " = nil"
+	}
+
+	return emittedField
+}
+
+func (s *SwiftEmitter) emitFieldInitializer(field *parser.FieldExpression) string {
+	var builder strings.Builder
+
+	builder.WriteString("self.")
+	builder.WriteString(field.Id.Name)
+	builder.WriteString(" = ")
+	builder.WriteString(field.Id.Name)
+
+	return builder.String()
+}
+
 func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
 	var builder strings.Builder
 
 	primitive, isPrimitive := ktPrimitives[typeExpr.Id.Name]
 
+	isMap := typeExpr.Id.Name == "Map"
+	isArray := typeExpr.Id.Name == "Array"
+
 	if isPrimitive {
-		builder.WriteString(primitive)
+
+		if isArray || isMap {
+			builder.WriteString("[")
+		} else {
+			builder.WriteString(primitive)
+		}
 	} else {
 		builder.WriteString(typeExpr.Id.Name)
 	}
@@ -125,17 +174,27 @@ func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		isFirst := i == 0
 		isLast := i+1 == len(typeExpr.Generics)
 
-		if isFirst {
+		if isFirst && !isMap && !isArray {
 			builder.WriteString("<")
-
 		}
+
 		builder.WriteString(s.emitType(typ))
 
 		if isLast {
-			builder.WriteString(">")
+			if !isMap && !isArray {
+				builder.WriteString(">")
+			}
 		} else {
-			builder.WriteString(", ")
+			if isMap {
+				builder.WriteString(" : ")
+			} else {
+				builder.WriteString(", ")
+			}
 		}
+	}
+
+	if isArray || isMap {
+		builder.WriteString("]")
 	}
 
 	return builder.String()
@@ -148,20 +207,14 @@ func (s *SwiftEmitter) emitEnum(enum *parser.EnumDefinition) string {
 	builder.WriteString(enum.Id.Name)
 	builder.WriteString(": String, Decodable, Equatable {\n")
 
-	for i, value := range enum.Values {
+	for _, value := range enum.Values {
 
 		builder.WriteString(Indent)
 		builder.WriteString("case ")
-		builder.WriteString("TODO: Emit camelCase name")
+		builder.WriteString(codestyle.ToCamelCase(value))
+		builder.WriteString(" = \"")
 		builder.WriteString(s.emitLiteralValue(value))
-
-		isLast := i+1 == len(enum.Values)
-
-		if !isLast {
-			builder.WriteString(",")
-		}
-
-		builder.WriteString("\n")
+		builder.WriteString("\"\n")
 	}
 
 	builder.WriteString("}")
