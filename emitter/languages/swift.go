@@ -9,152 +9,135 @@ import (
 
 var swiftPrimitives = map[string]string{
 	"String":    "String",
-	"Char":      "Char",
-	"UInt8":     "UByte",
-	"UInt16":    "UShort",
-	"UInt32":    "UInt",
-	"UInt64":    "ULong",
-	"Int8":      "Byte",
-	"Int16":     "Short",
-	"Int32":     "Int",
-	"Int64":     "Long",
+	"Char":      "Character",
+	"UInt8":     "UInt8",
+	"UInt16":    "UInt16",
+	"UInt32":    "UInt32",
+	"UInt64":    "UInt64",
+	"Int8":      "Int8",
+	"Int16":     "Int16",
+	"Int32":     "Int32",
+	"Int64":     "Int64",
 	"Float":     "Float",
 	"Double":    "Double",
-	"TimeStamp": "Instant",
-	"Date":      "LocalDate",
-	"DateTime":  "LocalDateTime",
-	"Map":       "Map",
-	"Bool":      "Boolean",
+	"TimeStamp": "String",
+	"Date":      "String",
+	"DateTime":  "String",
+	"Array":     "[]",
+	"Map":       "[:]",
+	"Bool":      "Bool",
 }
 
-type SwiftEmitter struct{}
+type SwiftEmitter struct {
+	buffer strings.Builder
+}
 
 func (s *SwiftEmitter) Emit(tree *parser.EskemaTree) string {
-	var builder strings.Builder
-
 	for _, expr := range tree.Expr {
-		builder.WriteString(s.emitExpression(expr))
-		builder.WriteString("\n\n")
+		s.emitExpression(expr)
+		s.buffer.WriteString("\n\n")
 	}
 
-	return builder.String()
+	return s.buffer.String()
 }
 
-func (s *SwiftEmitter) emitExpression(expr *parser.EskemaExpression) string {
+func (s *SwiftEmitter) emitExpression(expr *parser.EskemaExpression) {
 	switch expr.Type {
 	case parser.SchemaExpr:
-		return s.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		s.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		break
 	case parser.EnumExpr:
-		return s.emitEnum(expr.Data.(*parser.EnumDefinition))
+		s.emitEnum(expr.Data.(*parser.EnumDefinition))
+		break
 	default:
-		return ""
+		break
 	}
 }
 
-func (s *SwiftEmitter) emitSchema(schema *parser.SchemaDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("public struct ")
-	builder.WriteString(schema.Id.Name)
-	builder.WriteString(": Decodable, Equatable {\n")
+func (s *SwiftEmitter) emitSchema(schema *parser.SchemaDefinition) {
+	s.buffer.WriteString("public struct ")
+	s.buffer.WriteString(schema.Id.Name)
+	s.buffer.WriteString(": Decodable, Equatable {\n")
 
 	// TODO: Emit generics
 
 	for _, field := range schema.Fields {
-		builder.WriteString(Indent)
+		s.buffer.WriteString(Indent)
 
-		builder.WriteString(s.emitFieldDeclaration(field))
+		s.emitFieldDeclaration(field)
 
-		builder.WriteString("\n")
+		s.buffer.WriteString("\n")
 	}
 
 	if schema.ContainsNullableFields() {
-		s.emitNullableConstructor(&builder, schema)
+		s.emitNullableConstructor(schema)
 	}
 
-	builder.WriteString("}")
-
-	return builder.String()
+	s.buffer.WriteString("}")
 }
 
-func (s *SwiftEmitter) emitNullableConstructor(builder *strings.Builder, schema *parser.SchemaDefinition) {
+func (s *SwiftEmitter) emitNullableConstructor(schema *parser.SchemaDefinition) {
 
-	builder.WriteString("\n")
+	s.buffer.WriteString("\n")
 
-	builder.WriteString(Indent)
-	builder.WriteString("public init(")
+	s.buffer.WriteString(Indent)
+	s.buffer.WriteString("public init(")
 
 	for i, field := range schema.Fields {
 		isLast := i+1 == len(schema.Fields)
 
-		builder.WriteString(s.emitConstructorField(field))
+		s.emitConstructorField(field)
 
 		if !isLast {
-			builder.WriteString(", ")
+			s.buffer.WriteString(", ")
 		}
 	}
 
-	builder.WriteString(") {\n")
+	s.buffer.WriteString(") {\n")
 
 	for _, field := range schema.Fields {
-		builder.WriteString(Indent)
-		builder.WriteString(Indent)
-		builder.WriteString(s.emitFieldInitializer(field))
-		builder.WriteString("\n")
+		s.buffer.WriteString(Indent)
+		s.buffer.WriteString(Indent)
+		s.emitFieldInitializer(field)
+		s.buffer.WriteString("\n")
 	}
 
-	builder.WriteString(Indent)
-	builder.WriteString("}\n")
+	s.buffer.WriteString(Indent)
+	s.buffer.WriteString("}\n")
 }
 
-func (s *SwiftEmitter) emitField(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString(field.Id.Name)
-	builder.WriteString(": ")
-	builder.WriteString(s.emitType(field.Type))
+func (s *SwiftEmitter) emitField(field *parser.FieldExpression) {
+	s.buffer.WriteString(field.Id.Name)
+	s.buffer.WriteString(": ")
+	s.emitType(field.Type)
 
 	if field.IsOptional {
-		builder.WriteString("?")
+		s.buffer.WriteString("?")
 	}
-
-	return builder.String()
 }
 
-func (s *SwiftEmitter) emitFieldDeclaration(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString("let ")
-	builder.WriteString(s.emitField(field))
-
-	return builder.String()
+func (s *SwiftEmitter) emitFieldDeclaration(field *parser.FieldExpression) {
+	s.buffer.WriteString("let ")
+	s.emitField(field)
 }
 
-func (s *SwiftEmitter) emitConstructorField(field *parser.FieldExpression) string {
-	emittedField := s.emitField(field)
+func (s *SwiftEmitter) emitConstructorField(field *parser.FieldExpression) {
+	s.emitField(field)
 
 	if field.IsOptional {
-		emittedField = emittedField + " = nil"
+		s.buffer.WriteString(" = nil")
 	}
-
-	return emittedField
 }
 
-func (s *SwiftEmitter) emitFieldInitializer(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString("self.")
-	builder.WriteString(field.Id.Name)
-	builder.WriteString(" = ")
-	builder.WriteString(field.Id.Name)
-
-	return builder.String()
+func (s *SwiftEmitter) emitFieldInitializer(field *parser.FieldExpression) {
+	s.buffer.WriteString("self.")
+	s.buffer.WriteString(field.Id.Name)
+	s.buffer.WriteString(" = ")
+	s.buffer.WriteString(field.Id.Name)
 }
 
-func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
-	var builder strings.Builder
-
-	primitive, isPrimitive := ktPrimitives[typeExpr.Id.Name]
+func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) {
+	primitive, isPrimitive := swiftPrimitives[typeExpr.Id.Name]
 
 	isMap := typeExpr.Id.Name == "Map"
 	isArray := typeExpr.Id.Name == "Array"
@@ -162,12 +145,12 @@ func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
 	if isPrimitive {
 
 		if isArray || isMap {
-			builder.WriteString("[")
+			s.buffer.WriteString("[")
 		} else {
-			builder.WriteString(primitive)
+			s.buffer.WriteString(primitive)
 		}
 	} else {
-		builder.WriteString(typeExpr.Id.Name)
+		s.buffer.WriteString(typeExpr.Id.Name)
 	}
 
 	for i, typ := range typeExpr.Generics {
@@ -175,55 +158,49 @@ func (s *SwiftEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		isLast := i+1 == len(typeExpr.Generics)
 
 		if isFirst && !isMap && !isArray {
-			builder.WriteString("<")
+			s.buffer.WriteString("<")
 		}
 
-		builder.WriteString(s.emitType(typ))
+		s.emitType(typ)
 
 		if isLast {
 			if !isMap && !isArray {
-				builder.WriteString(">")
+				s.buffer.WriteString(">")
 			}
 		} else {
 			if isMap {
-				builder.WriteString(" : ")
+				s.buffer.WriteString(" : ")
 			} else {
-				builder.WriteString(", ")
+				s.buffer.WriteString(", ")
 			}
 		}
 	}
 
 	if isArray || isMap {
-		builder.WriteString("]")
+		s.buffer.WriteString("]")
 	}
-
-	return builder.String()
 }
 
-func (s *SwiftEmitter) emitEnum(enum *parser.EnumDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("public enum ")
-	builder.WriteString(enum.Id.Name)
-	builder.WriteString(": String, Decodable, Equatable {\n")
+func (s *SwiftEmitter) emitEnum(enum *parser.EnumDefinition) {
+	s.buffer.WriteString("public enum ")
+	s.buffer.WriteString(enum.Id.Name)
+	s.buffer.WriteString(": String, Decodable, Equatable {\n")
 
 	for _, value := range enum.Values {
 
-		builder.WriteString(Indent)
-		builder.WriteString("case ")
-		builder.WriteString(codestyle.ToCamelCase(value))
-		builder.WriteString(" = \"")
-		builder.WriteString(s.emitLiteralValue(value))
-		builder.WriteString("\"\n")
+		s.buffer.WriteString(Indent)
+		s.buffer.WriteString("case ")
+		s.buffer.WriteString(codestyle.ToCamelCase(value))
+		s.buffer.WriteString(" = \"")
+		s.emitLiteralValue(value)
+		s.buffer.WriteString("\"\n")
 	}
 
-	builder.WriteString("}")
-
-	return builder.String()
+	s.buffer.WriteString("}")
 }
 
-func (*SwiftEmitter) emitLiteralValue(enum string) string {
-	return enum
+func (s *SwiftEmitter) emitLiteralValue(enum string) {
+	s.buffer.WriteString(enum)
 }
 
 func NewSwiftEmitter() emitter.LanguageCodeEmitter {

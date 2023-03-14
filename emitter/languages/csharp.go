@@ -19,7 +19,7 @@ var cSharpPrimitives = map[string]string{
 	"Int64":     "long",
 	"Float":     "float",
 	"Double":    "double",
-	"TimeStamp": "TimeSpan",
+	"TimeStamp": "DateTime",
 	"Date":      "DateTime",
 	"DateTime":  "DateTime",
 	"Array":     "List",
@@ -27,100 +27,90 @@ var cSharpPrimitives = map[string]string{
 	"Bool":      "bool",
 }
 
-type CSharpEmitter struct{}
+type CSharpEmitter struct {
+	buffer strings.Builder
+}
 
 func (c *CSharpEmitter) Emit(tree *parser.EskemaTree) string {
-	var builder strings.Builder
-
-	builder.WriteString("namespace Example;\n\n")
+	c.buffer.WriteString("namespace Example;\n\n")
 
 	for _, expr := range tree.Expr {
-		builder.WriteString(c.emitExpression(expr))
-		builder.WriteString("\n")
+		c.emitExpression(expr)
+		c.buffer.WriteString("\n")
 	}
 
-	return builder.String()
+	return c.buffer.String()
 }
 
-func (c *CSharpEmitter) emitExpression(expr *parser.EskemaExpression) string {
+func (c *CSharpEmitter) emitExpression(expr *parser.EskemaExpression) {
 	switch expr.Type {
 	case parser.SchemaExpr:
-		return c.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		c.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		break
 	case parser.EnumExpr:
-		return c.emitEnum(expr.Data.(*parser.EnumDefinition))
-	default:
-		return ""
+		c.emitEnum(expr.Data.(*parser.EnumDefinition))
+		break
 	}
 }
 
-func (c *CSharpEmitter) emitSchema(schema *parser.SchemaDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("public record ")
-	builder.WriteString(schema.Id.Name)
+func (c *CSharpEmitter) emitSchema(schema *parser.SchemaDefinition) {
+	c.buffer.WriteString("public record ")
+	c.buffer.WriteString(schema.Id.Name)
 
 	if len(schema.Generics) > 0 {
-		builder.WriteString("<")
+		c.buffer.WriteString("<")
 
 		for i, generic := range schema.Generics {
 			isLast := i+1 == len(schema.Generics)
 
-			builder.WriteString(c.emitType(generic))
+			c.emitType(generic)
 
 			if !isLast {
-				builder.WriteString(", ")
+				c.buffer.WriteString(", ")
 			}
 		}
 
-		builder.WriteString(">")
+		c.buffer.WriteString(">")
 	}
 
-	builder.WriteString("(\n")
+	c.buffer.WriteString("(\n")
 
 	for i, field := range schema.Fields {
 
 		isLast := i+1 == len(schema.Fields)
 
-		builder.WriteString(Indent)
+		c.buffer.WriteString(Indent)
 
-		builder.WriteString(c.emitField(field))
+		c.emitField(field)
 
 		if !isLast {
-			builder.WriteString(",")
+			c.buffer.WriteString(",")
 		}
 
-		builder.WriteString("\n")
+		c.buffer.WriteString("\n")
 	}
 
-	builder.WriteString(");\n")
-
-	return builder.String()
+	c.buffer.WriteString(");\n")
 }
 
-func (c *CSharpEmitter) emitField(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString(c.emitType(field.Type))
+func (c *CSharpEmitter) emitField(field *parser.FieldExpression) {
+	c.emitType(field.Type)
 
 	if field.IsOptional {
-		builder.WriteString("?")
+		c.buffer.WriteString("?")
 	}
 
-	builder.WriteString(" ")
-	builder.WriteString(field.Id.Name)
-
-	return builder.String()
+	c.buffer.WriteString(" ")
+	c.buffer.WriteString(field.Id.Name)
 }
 
-func (c *CSharpEmitter) emitType(typeExpr *parser.TypeExpression) string {
-	var builder strings.Builder
-
+func (c *CSharpEmitter) emitType(typeExpr *parser.TypeExpression) {
 	primitive, isPrimitive := cSharpPrimitives[typeExpr.Id.Name]
 
 	if isPrimitive {
-		builder.WriteString(primitive)
+		c.buffer.WriteString(primitive)
 	} else {
-		builder.WriteString(typeExpr.Id.Name)
+		c.buffer.WriteString(typeExpr.Id.Name)
 	}
 
 	for i, typ := range typeExpr.Generics {
@@ -128,49 +118,43 @@ func (c *CSharpEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		isLast := i+1 == len(typeExpr.Generics)
 
 		if isFirst {
-			builder.WriteString("<")
-
+			c.buffer.WriteString("<")
 		}
-		builder.WriteString(c.emitType(typ))
+
+		c.emitType(typ)
 
 		if isLast {
-			builder.WriteString(">")
+			c.buffer.WriteString(">")
 		} else {
-			builder.WriteString(", ")
+			c.buffer.WriteString(", ")
 		}
 	}
-
-	return builder.String()
 }
 
-func (c *CSharpEmitter) emitEnum(enum *parser.EnumDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("enum ")
-	builder.WriteString(enum.Id.Name)
-	builder.WriteString(" {\n")
+func (c *CSharpEmitter) emitEnum(enum *parser.EnumDefinition) {
+	c.buffer.WriteString("enum ")
+	c.buffer.WriteString(enum.Id.Name)
+	c.buffer.WriteString(" {\n")
 
 	for i, value := range enum.Values {
 
-		builder.WriteString(Indent)
-		builder.WriteString(c.emitLiteralValue(value))
+		c.buffer.WriteString(Indent)
+		c.emitLiteralValue(value)
 
 		isLast := i+1 == len(enum.Values)
 
 		if !isLast {
-			builder.WriteString(",")
+			c.buffer.WriteString(",")
 		}
 
-		builder.WriteString("\n")
+		c.buffer.WriteString("\n")
 	}
 
-	builder.WriteString("};\n")
-
-	return builder.String()
+	c.buffer.WriteString("};\n")
 }
 
-func (c *CSharpEmitter) emitLiteralValue(enum string) string {
-	return enum
+func (c *CSharpEmitter) emitLiteralValue(enum string) {
+	c.buffer.WriteString(enum)
 }
 
 func NewCSharpEmitter() emitter.LanguageCodeEmitter {

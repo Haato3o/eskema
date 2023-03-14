@@ -29,100 +29,92 @@ var ktPrimitives = map[string]string{
 	"Bool":      "Boolean",
 }
 
-type KotlinEmitter struct{}
+type KotlinEmitter struct {
+	buffer strings.Builder
+}
 
 func (k *KotlinEmitter) Emit(tree *parser.EskemaTree) string {
-	var builder strings.Builder
-
-	builder.WriteString("package com.example\n\n")
+	k.buffer.WriteString("package com.example\n\n")
 
 	for _, expr := range tree.Expr {
-		builder.WriteString(k.emitExpression(expr))
-		builder.WriteString("\n")
+		k.emitExpression(expr)
+		k.buffer.WriteString("\n")
 	}
 
-	return builder.String()
+	return k.buffer.String()
 }
 
-func (k *KotlinEmitter) emitExpression(expr *parser.EskemaExpression) string {
+func (k *KotlinEmitter) emitExpression(expr *parser.EskemaExpression) {
 	switch expr.Type {
 	case parser.SchemaExpr:
-		return k.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		k.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		break
 	case parser.EnumExpr:
-		return k.emitEnum(expr.Data.(*parser.EnumDefinition))
+		k.emitEnum(expr.Data.(*parser.EnumDefinition))
+		break
 	default:
-		return ""
+		break
 	}
 }
 
-func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("data class ")
-	builder.WriteString(schema.Id.Name)
+func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) {
+	k.buffer.WriteString("data class ")
+	k.buffer.WriteString(schema.Id.Name)
 
 	if len(schema.Generics) > 0 {
-		builder.WriteString("<")
+		k.buffer.WriteString("<")
 
 		for i, generic := range schema.Generics {
 			isLast := i+1 == len(schema.Generics)
 
-			builder.WriteString(k.emitType(generic))
+			k.emitType(generic)
 
 			if !isLast {
-				builder.WriteString(", ")
+				k.buffer.WriteString(", ")
 			}
 		}
 
-		builder.WriteString(">")
+		k.buffer.WriteString(">")
 	}
 
-	builder.WriteString("(\n")
+	k.buffer.WriteString("(\n")
 
 	for i, field := range schema.Fields {
 
 		isLast := i+1 == len(schema.Fields)
 
-		builder.WriteString(Indent)
+		k.buffer.WriteString(Indent)
 
-		builder.WriteString(k.emitField(field))
+		k.emitField(field)
 
 		if !isLast {
-			builder.WriteString(",")
+			k.buffer.WriteString(",")
 		}
 
-		builder.WriteString("\n")
+		k.buffer.WriteString("\n")
 	}
 
-	builder.WriteString(")\n")
-
-	return builder.String()
+	k.buffer.WriteString(")\n")
 }
 
-func (k *KotlinEmitter) emitField(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString("val ")
-	builder.WriteString(field.Id.Name)
-	builder.WriteString(": ")
-	builder.WriteString(k.emitType(field.Type))
+func (k *KotlinEmitter) emitField(field *parser.FieldExpression) {
+	k.buffer.WriteString("val ")
+	k.buffer.WriteString(field.Id.Name)
+	k.buffer.WriteString(": ")
+	k.emitType(field.Type)
 
 	if field.IsOptional {
-		builder.WriteString("?")
+		k.buffer.WriteString("?")
 	}
-
-	return builder.String()
 }
 
-func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) string {
-	var builder strings.Builder
-
+func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) {
 	primitive, isPrimitive := ktPrimitives[typeExpr.Id.Name]
 
 	if isPrimitive {
-		builder.WriteString(primitive)
+		k.buffer.WriteString(primitive)
 	} else {
-		builder.WriteString(typeExpr.Id.Name)
+		k.buffer.WriteString(typeExpr.Id.Name)
 	}
 
 	for i, typ := range typeExpr.Generics {
@@ -130,49 +122,45 @@ func (k *KotlinEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		isLast := i+1 == len(typeExpr.Generics)
 
 		if isFirst {
-			builder.WriteString("<")
+			k.buffer.WriteString("<")
 
 		}
-		builder.WriteString(k.emitType(typ))
+
+		k.emitType(typ)
 
 		if isLast {
-			builder.WriteString(">")
+			k.buffer.WriteString(">")
 		} else {
-			builder.WriteString(", ")
+			k.buffer.WriteString(", ")
 		}
 	}
-
-	return builder.String()
 }
 
-func (k *KotlinEmitter) emitEnum(enum *parser.EnumDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("enum class ")
-	builder.WriteString(enum.Id.Name)
-	builder.WriteString(" {\n")
+func (k *KotlinEmitter) emitEnum(enum *parser.EnumDefinition) {
+	k.buffer.WriteString("enum class ")
+	k.buffer.WriteString(enum.Id.Name)
+	k.buffer.WriteString(" {\n")
 
 	for i, value := range enum.Values {
 
-		builder.WriteString(Indent)
-		builder.WriteString(k.emitLiteralValue(value))
+		k.buffer.WriteString(Indent)
+
+		k.emitLiteralValue(value)
 
 		isLast := i+1 == len(enum.Values)
 
 		if !isLast {
-			builder.WriteString(",")
+			k.buffer.WriteString(",")
 		}
 
-		builder.WriteString("\n")
+		k.buffer.WriteString("\n")
 	}
 
-	builder.WriteString("}\n")
-
-	return builder.String()
+	k.buffer.WriteString("}\n")
 }
 
-func (*KotlinEmitter) emitLiteralValue(enum string) string {
-	return enum
+func (k *KotlinEmitter) emitLiteralValue(enum string) {
+	k.buffer.WriteString(enum)
 }
 
 func NewKotlinEmitter() emitter.LanguageCodeEmitter {
