@@ -6,8 +6,8 @@ public enum State: String, Decodable, Equatable {
 
 public struct SimpleSchema: Decodable, Equatable {
     let value1: String
-    let value2: [String : Int]
-    let value3: Boolean
+    let value2: [String : Int32]
+    let value3: Bool
 }
 
 public struct SimpleSchemaWithGenerics: Decodable, Equatable {

@@ -27,106 +27,88 @@ var goLangPrimitives = map[string]string{
 	"Bool":      "bool",
 }
 
-type GoLangEmitter struct{}
-
-type SimpleSchemaWithGenerics[T any] struct {
-	value1 T
-	value2 []T
+type GoLangEmitter struct {
+	buffer strings.Builder
 }
 
-type ComplexSchema[TIn string, TOut any] struct {
-	value1 *map[TIn]SimpleSchemaWithGenerics[TOut]
-	value2 *[][]string
-}
-
-func (c *GoLangEmitter) Emit(tree *parser.EskemaTree) string {
-	var builder strings.Builder
-
-	builder.WriteString("package example\n\n")
+func (g *GoLangEmitter) Emit(tree *parser.EskemaTree) string {
+	g.buffer.WriteString("package example\n\n")
 
 	for _, expr := range tree.Expr {
-		builder.WriteString(c.emitExpression(expr))
-		builder.WriteString("\n")
+		g.emitExpression(expr)
+		g.buffer.WriteString("\n")
 	}
 
-	return builder.String()
+	return g.buffer.String()
 }
 
-func (c *GoLangEmitter) emitExpression(expr *parser.EskemaExpression) string {
+func (g *GoLangEmitter) emitExpression(expr *parser.EskemaExpression) {
 	switch expr.Type {
 	case parser.SchemaExpr:
-		return c.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		g.emitSchema(expr.Data.(*parser.SchemaDefinition))
+		break
 	case parser.EnumExpr:
-		return c.emitEnum(expr.Data.(*parser.EnumDefinition))
+		g.emitEnum(expr.Data.(*parser.EnumDefinition))
+		break
 	default:
-		return ""
+		break
 	}
 }
 
-func (c *GoLangEmitter) emitSchema(schema *parser.SchemaDefinition) string {
-	var builder strings.Builder
-
-	builder.WriteString("type ")
-	builder.WriteString(schema.Id.Name)
+func (g *GoLangEmitter) emitSchema(schema *parser.SchemaDefinition) {
+	g.buffer.WriteString("type ")
+	g.buffer.WriteString(schema.Id.Name)
 
 	if len(schema.Generics) > 0 {
-		builder.WriteString("[")
+		g.buffer.WriteString("[")
 
 		for i, generic := range schema.Generics {
 			isLast := i+1 == len(schema.Generics)
 
-			builder.WriteString(c.emitType(generic))
-			builder.WriteString(" any")
+			g.emitType(generic)
+			g.buffer.WriteString(" any")
 
 			if !isLast {
-				builder.WriteString(", ")
+				g.buffer.WriteString(", ")
 			}
 		}
 
-		builder.WriteString("]")
+		g.buffer.WriteString("]")
 	}
 
-	builder.WriteString(" struct")
+	g.buffer.WriteString(" struct")
 
-	builder.WriteString(" {\n")
+	g.buffer.WriteString(" {\n")
 
 	for _, field := range schema.Fields {
-		builder.WriteString(Indent)
+		g.buffer.WriteString(Indent)
 
-		builder.WriteString(c.emitField(field))
+		g.emitField(field)
 
-		builder.WriteString("\n")
+		g.buffer.WriteString("\n")
 	}
 
-	builder.WriteString("}\n")
-
-	return builder.String()
+	g.buffer.WriteString("}\n")
 }
 
-func (c *GoLangEmitter) emitField(field *parser.FieldExpression) string {
-	var builder strings.Builder
-
-	builder.WriteString(field.Id.Name)
-	builder.WriteString(" ")
+func (g *GoLangEmitter) emitField(field *parser.FieldExpression) {
+	g.buffer.WriteString(field.Id.Name)
+	g.buffer.WriteString(" ")
 
 	if field.IsOptional {
-		builder.WriteString("*")
+		g.buffer.WriteString("*")
 	}
 
-	builder.WriteString(c.emitType(field.Type))
-
-	return builder.String()
+	g.emitType(field.Type)
 }
 
-func (c *GoLangEmitter) emitType(typeExpr *parser.TypeExpression) string {
-	var builder strings.Builder
-
+func (g *GoLangEmitter) emitType(typeExpr *parser.TypeExpression) {
 	primitive, isPrimitive := goLangPrimitives[typeExpr.Id.Name]
 
 	if isPrimitive {
-		builder.WriteString(primitive)
+		g.buffer.WriteString(primitive)
 	} else {
-		builder.WriteString(typeExpr.Id.Name)
+		g.buffer.WriteString(typeExpr.Id.Name)
 	}
 
 	for i, typ := range typeExpr.Generics {
@@ -135,51 +117,45 @@ func (c *GoLangEmitter) emitType(typeExpr *parser.TypeExpression) string {
 		isArray := typeExpr.Id.Name == "Array"
 
 		if isFirst && (hasMultipleElements || !isArray) {
-			builder.WriteString("[")
+			g.buffer.WriteString("[")
 		}
 
-		builder.WriteString(c.emitType(typ))
+		g.emitType(typ)
 
 		if isFirst && (hasMultipleElements || !isArray) {
-			builder.WriteString("]")
+			g.buffer.WriteString("]")
 		}
 	}
-
-	return builder.String()
 }
 
-func (c *GoLangEmitter) emitEnum(enum *parser.EnumDefinition) string {
-	var builder strings.Builder
+func (g *GoLangEmitter) emitEnum(enum *parser.EnumDefinition) {
+	g.buffer.WriteString("type ")
+	g.buffer.WriteString(enum.Id.Name)
+	g.buffer.WriteString(" int\n")
 
-	builder.WriteString("type ")
-	builder.WriteString(enum.Id.Name)
-	builder.WriteString(" int\n")
-
-	builder.WriteString("const (\n")
+	g.buffer.WriteString("const (\n")
 
 	for i, value := range enum.Values {
 
 		isFirst := i == 0
 
-		builder.WriteString(Indent)
-		builder.WriteString(c.emitLiteralValue(value))
+		g.buffer.WriteString(Indent)
+		g.emitLiteralValue(value)
 
 		if isFirst {
-			builder.WriteString(" ")
-			builder.WriteString(enum.Id.Name)
-			builder.WriteString(" = iota")
+			g.buffer.WriteString(" ")
+			g.buffer.WriteString(enum.Id.Name)
+			g.buffer.WriteString(" = iota")
 		}
 
-		builder.WriteString("\n")
+		g.buffer.WriteString("\n")
 	}
 
-	builder.WriteString(")\n")
-
-	return builder.String()
+	g.buffer.WriteString(")\n")
 }
 
-func (c *GoLangEmitter) emitLiteralValue(enum string) string {
-	return enum
+func (g *GoLangEmitter) emitLiteralValue(enum string) {
+	g.buffer.WriteString(enum)
 }
 
 func NewGoLangEmitter() emitter.LanguageCodeEmitter {
