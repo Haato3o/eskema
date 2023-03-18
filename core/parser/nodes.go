@@ -32,10 +32,16 @@ func (s *SchemaDefinition) ContainsNullableFields() bool {
 	return false
 }
 
+type AnnotationExpression struct {
+	Id    IdentifierExpression
+	Value string
+}
+
 type FieldExpression struct {
-	Id         IdentifierExpression
-	IsOptional bool
-	Type       *TypeExpression
+	Id          IdentifierExpression
+	IsOptional  bool
+	Type        *TypeExpression
+	Annotations []*AnnotationExpression
 }
 
 type TypeExpression struct {

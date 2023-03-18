@@ -42,6 +42,10 @@ var tokens = map[byte]TokenType{
 	'{': ScopeStartToken,
 	'}': ScopeEndToken,
 
+	'@': AtToken,
+	'(': ParenthesisStart,
+	')': ParenthesisEnd,
+
 	'\n': NewLineToken,
 }
 

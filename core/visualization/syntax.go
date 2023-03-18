@@ -71,6 +71,12 @@ func buildType(typeExpr *parser.TypeExpression, level string, order TreeOrder) s
 	return baseString
 }
 
+func buildAnnotation(annotation *parser.AnnotationExpression, level string, order TreeOrder) string {
+	currentLevel := fmt.Sprintf("%s%s", level, getParentConnector(order))
+
+	return fmt.Sprintf("%s annotation: %s = %s\n", currentLevel, annotation.Id.Name, annotation.Value)
+}
+
 func buildField(field *parser.FieldExpression, level string, order TreeOrder) string {
 	childLevel := fmt.Sprintf("%s%s   ", level, getTreeRootConnector(order))
 	currentLevel := fmt.Sprintf("%s%s", level, getParentConnector(order))
@@ -82,6 +88,11 @@ func buildField(field *parser.FieldExpression, level string, order TreeOrder) st
 	}
 
 	baseString := fmt.Sprintf("%s field: %s %s\n", currentLevel, field.Id.Name, optional)
+
+	for i, annotation := range field.Annotations {
+
+		baseString += buildAnnotation(annotation, childLevel, getOrder(i, len(field.Annotations)+1))
+	}
 
 	baseString += buildType(field.Type, childLevel, Last)
 

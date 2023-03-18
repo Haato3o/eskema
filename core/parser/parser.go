@@ -162,8 +162,35 @@ func (p *EskemaParser) parseType() *TypeExpression {
 	return typeExpression
 }
 
+func (p *EskemaParser) parseAnnotation() *AnnotationExpression {
+	annotationExpression := &AnnotationExpression{}
+	p.nextTokenMustBe(syntax.AtToken)
+	name := p.nextTokenMustBe(syntax.LiteralToken)
+
+	annotationExpression.Id.Name = name.Value
+
+	p.nextTokenMustBe(syntax.ParenthesisStart)
+
+	value := p.nextTokenMustBe(syntax.LiteralToken)
+	annotationExpression.Value = value.Value
+
+	p.nextTokenMustBe(syntax.ParenthesisEnd)
+
+	return annotationExpression
+}
+
 func (p *EskemaParser) parseField() *FieldExpression {
 	fieldExpression := &FieldExpression{}
+
+	isAnnotation := p.stream.PeekCurrent().Type == syntax.AtToken
+	fieldExpression.Annotations = make([]*AnnotationExpression, 0)
+	for isAnnotation {
+
+		annotation := p.parseAnnotation()
+		fieldExpression.Annotations = append(fieldExpression.Annotations, annotation)
+
+		isAnnotation = p.stream.PeekCurrent().Type == syntax.AtToken
+	}
 
 	name := p.nextTokenMustBe(syntax.LiteralToken)
 
