@@ -20,7 +20,7 @@ var cSharpPrimitives = map[string]string{
 	"Float":     "float",
 	"Double":    "double",
 	"TimeStamp": "DateTime",
-	"Date":      "DateTime",
+	"Date":      "OnlyDate",
 	"DateTime":  "DateTime",
 	"Array":     "List",
 	"Map":       "Dictionary",

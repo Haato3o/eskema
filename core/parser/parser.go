@@ -167,7 +167,7 @@ func (p *EskemaParser) parseAnnotation() *AnnotationExpression {
 	p.nextTokenMustBe(syntax.AtToken)
 	name := p.nextTokenMustBe(syntax.LiteralToken)
 
-	annotationExpression.Id.Name = name.Value
+	annotationExpression.Type = syntax.AnnotationType(name.Value)
 
 	p.nextTokenMustBe(syntax.ParenthesisStart)
 

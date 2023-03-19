@@ -82,3 +82,29 @@ func TestToPascalCase(t *testing.T) {
 		})
 	}
 }
+
+func TestIsSnakeCase(t *testing.T) {
+	testCases := []struct {
+		Input    string
+		Expected bool
+	}{
+		{"testCase", false},
+		{"TestCase", false},
+		{"test_case", true},
+		{"TEST_CASE", true},
+		{"test", true},
+		{"TEST", true},
+	}
+
+	for _, testCase := range testCases {
+		name := fmt.Sprintf("should return %t to %s", testCase.Expected, testCase.Input)
+
+		t.Run(name, func(t *testing.T) {
+			actual := IsSnakeCase(testCase.Input)
+
+			if actual != testCase.Expected {
+				t.Errorf("got %t, expected %t", actual, testCase.Expected)
+			}
+		})
+	}
+}
