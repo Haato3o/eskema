@@ -1,5 +1,7 @@
 package parser
 
+import "github.com/Haato3o/eskema/core/syntax"
+
 type EskemaExprType int
 
 const (
@@ -32,10 +34,16 @@ func (s *SchemaDefinition) ContainsNullableFields() bool {
 	return false
 }
 
+type AnnotationExpression struct {
+	Type  syntax.AnnotationType
+	Value string
+}
+
 type FieldExpression struct {
-	Id         IdentifierExpression
-	IsOptional bool
-	Type       *TypeExpression
+	Id          IdentifierExpression
+	IsOptional  bool
+	Type        *TypeExpression
+	Annotations []*AnnotationExpression
 }
 
 type TypeExpression struct {

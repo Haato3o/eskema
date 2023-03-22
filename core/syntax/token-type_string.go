@@ -21,13 +21,16 @@ func _() {
 	_ = x[QuestionMarkToken-10]
 	_ = x[ScopeStartToken-11]
 	_ = x[ScopeEndToken-12]
-	_ = x[NewLineToken-13]
-	_ = x[EndOfFileToken-14]
+	_ = x[AtToken-13]
+	_ = x[ParenthesisStart-14]
+	_ = x[ParenthesisEnd-15]
+	_ = x[NewLineToken-16]
+	_ = x[EndOfFileToken-17]
 }
 
-const _TokenType_name = "InvalidTokenKeywordTokenLiteralTokenPrimitiveTypeTokenWhitespaceTokenLesserThanTokenGreaterThanTokenCommaTokenColonTokenSemiColonTokenQuestionMarkTokenScopeStartScopeEndNewLineTokenEndOfFileToken"
+const _TokenType_name = "InvalidTokenKeywordTokenLiteralTokenPrimitiveTypeTokenWhitespaceTokenLesserThanTokenGreaterThanTokenCommaTokenColonTokenSemiColonTokenQuestionMarkTokenScopeStartTokenScopeEndTokenAtTokenParenthesisStartParenthesisEndNewLineTokenEndOfFileToken"
 
-var _TokenType_index = [...]uint8{0, 12, 24, 36, 54, 69, 84, 100, 110, 120, 134, 151, 161, 169, 181, 195}
+var _TokenType_index = [...]uint8{0, 12, 24, 36, 54, 69, 84, 100, 110, 120, 134, 151, 166, 179, 186, 202, 216, 228, 242}
 
 func (i TokenType) String() string {
 	if i < 0 || i >= TokenType(len(_TokenType_index)-1) {

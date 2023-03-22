@@ -1,0 +1,8 @@
+schema Example
+{
+    @PropertyCase("snake_case")
+    MyField: String,
+    @PropertyCase("PascalCase")
+    @AnotherProperty("example")
+    MyOtherField: Int32
+};

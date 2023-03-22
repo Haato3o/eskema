@@ -24,6 +24,10 @@ const (
 	ScopeStartToken
 	ScopeEndToken
 
+	AtToken
+	ParenthesisStart
+	ParenthesisEnd
+
 	NewLineToken
 	EndOfFileToken
 )

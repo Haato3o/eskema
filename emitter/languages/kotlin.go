@@ -1,6 +1,7 @@
 package languages
 
 import (
+	"github.com/Haato3o/eskema/core/codestyle"
 	"github.com/Haato3o/eskema/core/parser"
 	"github.com/Haato3o/eskema/emitter"
 	"strings"
@@ -98,8 +99,16 @@ func (k *KotlinEmitter) emitSchema(schema *parser.SchemaDefinition) {
 }
 
 func (k *KotlinEmitter) emitField(field *parser.FieldExpression) {
+	fieldName := codestyle.ToCamelCase(field.Id.Name)
+
+	if fieldName != field.Id.Name {
+		k.buffer.WriteString("@SerializedName(\"")
+		k.buffer.WriteString(field.Id.Name)
+		k.buffer.WriteString("\") ")
+	}
+
 	k.buffer.WriteString("val ")
-	k.buffer.WriteString(field.Id.Name)
+	k.buffer.WriteString(fieldName)
 	k.buffer.WriteString(": ")
 	k.emitType(field.Type)
 

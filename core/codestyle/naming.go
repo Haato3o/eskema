@@ -35,7 +35,7 @@ func ToPascalCase(value string) string {
 }
 
 func normalizeNamingStyle(value string) string {
-	if isSnakeCase(value) {
+	if IsSnakeCase(value) {
 		return normalizeFromSnakeCase(value)
 	}
 
@@ -65,13 +65,23 @@ func normalizeFromPascalCase(value string) string {
 	return strings.Join(values, "+")
 }
 
-func isSnakeCase(value string) bool {
+func IsSnakeCase(value string) bool {
 	if length := len(strings.Split(value, "_")); length > 1 {
 		return true
 	}
 
+	containsLowercase := false
+	containsUppercase := false
 	for _, char := range value {
 		if utils.IsLowercaseCharacter(char) {
+			containsLowercase = true
+		}
+
+		if utils.IsUppercaseCharacter(char) {
+			containsUppercase = true
+		}
+
+		if containsLowercase && containsUppercase {
 			return false
 		}
 	}
