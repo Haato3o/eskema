@@ -26,8 +26,8 @@ schema User
   userId: Int64,
   name: String,
   email: String,
-  status: Status
-  friends: Array<Long>?,
+  status: Status,
+  friends: Array<Long>?
 };
 ```
 
